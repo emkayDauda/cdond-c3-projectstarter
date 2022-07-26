@@ -76,17 +76,29 @@ jobs:
     <<: *docker
     steps:
       - checkout
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - restore_cache:
+          keys:
+            - "frontend-build"
+      - run: 
+          name: Front-end test
+          command: |
+            cd frontend
+            npm i
+            npm run test
                 
   test-backend:
     <<: *docker
     steps:
       - checkout
-      # Checkout code from git
-      # Restore from cache
-      # Your job code here
+      - restore_cache:
+          keys:
+            - "backend-build"
+      - run: 
+          name: Backend-end test
+          command: |
+            cd backend
+            npm i
+            npm run test
             
   scan-frontend:
     <<: *docker
@@ -275,10 +287,10 @@ workflows:
     jobs:
       - build-frontend
       - build-backend
-      # - test-frontend:
-      #     requires: [build-frontend]
-      # - test-backend:
-      #     requires: [build-backend]
+      - test-frontend:
+          requires: [build-frontend]
+      - test-backend:
+          requires: [build-backend]
       # - scan-backend:
       #     requires: [build-backend]
       # - scan-frontend:
