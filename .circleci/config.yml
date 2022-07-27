@@ -211,6 +211,9 @@ jobs:
           fingerprints: ["4f:e8:df:36:f0:c7:fc:f3:33:a3:bc:73:e6:08:5e:87"]
       # attach workspace
       - run:
+          name: check inventory content
+          command: cat .circleci/ansible/inventory.txt
+      - run:
           name: Install dependencies
           command: apk add --update ansible
       - run:
