@@ -341,15 +341,31 @@ jobs:
           command: |
             apk add --update curl && \
               rm -rf /var/cache/apk/*
-            curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
             
+      - run:
+          name: Install dependencies (ansible)
+          command: apk add --update ansible
+
+      - run:
+          name: Install dependencies (openssh)
+          command: |
+            apk add --update openssh # Install openssh
+
+      - run:
+          name: Install dependencies (nodejs, npm)
+          command: |
             apk add --update nodejs npm
 
-            npm i
+      - run:
+          name: Install dependencies (awscli)
+          command: |
+            apk add --no-cache aws-cli
+
       - run:
           name: Deploy backend
           command: |
             ansible-playbook -i ~/project/.circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
+
       - clear-bucket
       - destroy-environment:
           stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
