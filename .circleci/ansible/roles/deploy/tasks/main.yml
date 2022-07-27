@@ -6,11 +6,12 @@
 - name: "move backend files to server."
   copy:
     src: /root/project/backend
-    dest: ~
+    dest: ~/backend
 
 - name: "install package dependencies"
   shell: |
     cd ~/backend
+    ls
     npm install
 
 - name: "build package"
