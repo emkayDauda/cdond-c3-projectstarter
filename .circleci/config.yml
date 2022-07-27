@@ -346,7 +346,13 @@ jobs:
           name: Deploy backend
           command: |
             ansible-playbook -i ~/project/.circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml
-      # Here's where you will add some code to rollback on failure  
+      - clear-bucket
+      - destroy-environment:
+          stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
+      - destroy-environment:
+          stack-name: "backend-${CIRCLE_WORKFLOW_ID:0:5}"
+      - revert-migrations    
+      - slack_notify    
 
 #   smoke-test:
 #     docker:
@@ -437,6 +443,7 @@ workflows:
           context: guildOfMages
       - deploy-backend:
           requires: [run-migrations]
+          context: guildOfMages
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
