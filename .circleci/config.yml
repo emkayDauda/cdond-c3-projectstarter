@@ -209,16 +209,17 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints: ["4f:e8:df:36:f0:c7:fc:f3:33:a3:bc:73:e6:08:5e:87"]
-      # attach workspace
+      - attach_workspace:
+          at: ~/
       - run:
           name: check inventory content
-          command: cat .circleci/ansible/inventory.txt
+          command: cat project/.circleci/ansible/inventory.txt
       - run:
           name: Install dependencies
           command: apk add --update ansible
       - run:
           name: "Run Playbook and configure server"
-          command: ansible-playbook -i .circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
+          command: ansible-playbook -i project/.circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
       - destroy-environment:
           stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
       - destroy-environment:
