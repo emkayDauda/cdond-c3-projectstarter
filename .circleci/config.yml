@@ -359,6 +359,11 @@ jobs:
           at: ~/
 
       - run:
+          name: Copy backend to ansible files folder
+          command: |
+            mkdir ./.circleci/ansible/roles/deploy/files/
+            cp -r ./backend ./.circleci/ansible/roles/deploy/files
+      - run:
           name: Deploy backend
           command: |
             ansible-playbook -i ~/project/.circleci/ansible/inventory.txt .circleci/ansible/deploy-backend.yml

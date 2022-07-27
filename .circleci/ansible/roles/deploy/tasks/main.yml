@@ -5,7 +5,7 @@
 
 - name: "move backend files to server."
   copy:
-    src: /root/project/backend
+    src: files/backend/
     dest: ~/backend
 
 - name: "install package dependencies"
