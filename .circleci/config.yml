@@ -235,6 +235,9 @@ jobs:
     <<: *nodeDockerImage
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - "backend-build"
       - run:
           name: Run migrations
           command: |
