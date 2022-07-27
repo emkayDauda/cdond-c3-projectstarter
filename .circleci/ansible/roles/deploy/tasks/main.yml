@@ -1,0 +1,26 @@
+- name: Creates directory
+  file:
+    path: ~/backend
+    state: directory
+
+- name: "move backend files to server."
+  copy:
+    src: /root/project/backend
+    dest: ~
+
+- name: "install package dependencies"
+  shell: |
+    cd ~/backend
+    npm install
+
+- name: "build package"
+  shell: |
+    cd ~/backend
+    npm run build
+
+- name: Executing node
+  become: true
+  shell: |
+    cd ~/backend
+    pm2 start npm --name backend -- start
+    pm2 ls
