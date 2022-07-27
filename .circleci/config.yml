@@ -20,7 +20,7 @@ commands:
     description: "Send a message in Slack"
     steps:
       - slack/notify:
-          channel: ABCXYZ
+          channel: general
           event: fail
           template: basic_fail_1
 
