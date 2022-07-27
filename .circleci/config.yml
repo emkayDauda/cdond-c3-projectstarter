@@ -240,7 +240,7 @@ jobs:
       - image: python:3.7-alpine3.16
     steps:
       - checkout
-      - install-aws
+      # - install-aws
       - add_ssh_keys:
           fingerprints: ["4f:e8:df:36:f0:c7:fc:f3:33:a3:bc:73:e6:08:5e:87"]
       - attach_workspace:
@@ -428,8 +428,8 @@ workflows:
       - run-migrations:
           requires: [configure-infrastructure]
           context: guildOfMages
-      # - deploy-frontend:
-      #     requires: [run-migrations]
+      - deploy-frontend:
+          requires: [run-migrations]
       # - deploy-backend:
       #     requires: [run-migrations]
       # - smoke-test:
