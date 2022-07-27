@@ -215,8 +215,12 @@ jobs:
           name: check inventory content
           command: cat ~/project/.circleci/ansible/inventory.txt
       - run:
-          name: Install dependencies
+          name: Install dependencies (ansible)
           command: apk add --update ansible
+      - run:
+          name: Install dependencies (openssh)
+          command: |
+            apk add --update openssh # Install openssh
       - run:
           name: "Run Playbook and configure server"
           command: ansible-playbook -i ~/project/.circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
