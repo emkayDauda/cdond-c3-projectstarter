@@ -43,7 +43,7 @@ commands:
               exit 1
             fi
 
-defaults: &docker
+defaults: &nodeDockerImage
   docker:
       - image: circleci/node:13.8.0
 
@@ -101,7 +101,7 @@ jobs:
           key: backend-build
 
   test-frontend:
-    <<: *docker
+    <<: *nodeDockerImage
     steps:
       - checkout
       - restore_cache:
@@ -115,7 +115,7 @@ jobs:
             npm run test
                 
   test-backend:
-    <<: *docker
+    <<: *nodeDockerImage
     steps:
       - checkout
       - restore_cache:
@@ -129,7 +129,7 @@ jobs:
             npm run test
             
   scan-frontend:
-    <<: *docker
+    <<: *nodeDockerImage
     steps:
       - checkout
       - restore_cache:
@@ -142,7 +142,7 @@ jobs:
             npm audit fix --audit-level=critical --force
 
   scan-backend:
-    <<: *docker
+    <<: *nodeDockerImage
     steps:
       - checkout
       - restore_cache:
@@ -197,28 +197,30 @@ jobs:
       - destroy-environment:
           stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
       - destroy-environment:
-          stack-name: "backend-${CIRCLE_WORKFLOW_ID:0:5}"      
+          stack-name: "backend-${CIRCLE_WORKFLOW_ID:0:5}"     
+      - slack_notify    
 
     
 
   configure-infrastructure:
-    <<: *docker
+    docker:
+      - image: python:3.7-alpine3.16
     steps:
-      # Checkout code from git
-      # Add ssh keys with fingerprint
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["4f:e8:df:36:f0:c7:fc:f3:33:a3:bc:73:e6:08:5e:87"]
       # attach workspace
       - run:
           name: Install dependencies
-          command: |
-            # Your code here
-            exit 1
-      - slack_notify
-#       - run:
-#           name: Configure server
-#           command: |
-#             # Your code here
-#             exit 1
-#       # Here's where you will add some code to rollback on failure      
+          command: apk add --update ansible
+      - run:
+          name: "Run Playbook and configure server"
+          command: ansible-playbook -i circleci/ansible/inventory.txt circleci/ansible/configure-server.yml
+      - destroy-environment:
+          stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
+      - destroy-environment:
+          stack-name: "backend-${CIRCLE_WORKFLOW_ID:0:5}"      
+      - slack_notify   
 
 #   run-migrations:
 #     docker:
@@ -349,6 +351,7 @@ workflows:
           requires: [build-frontend]
       - deploy-infrastructure:
           requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          context: guildOfMages
           # filters:
           #   branches:
           #     only: [test-feature-branch]
