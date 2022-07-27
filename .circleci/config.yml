@@ -5,6 +5,16 @@ orbs:
   aws-cli: circleci/aws-cli@3.1.1
 
 commands:
+  install-aws:
+    description: Install AWS CLI v2
+    steps:
+      - run:
+          name: Install AWS CLI v2
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+  
   destroy-environment:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
@@ -17,6 +27,18 @@ commands:
           when: on_fail
           command: |
             aws cloudformation delete-stack --stack-name <<parameters.stack-name>> --region us-east-1
+  clear-bucket:
+    description: Clear s3 bucket.
+    parameters:
+      bucket-name:
+        default: "udapeople-${CIRCLE_WORKFLOW_ID:0:5}"
+        type: string
+    steps:
+      - run:
+          name: Destroy environments
+          when: on_fail
+          command: |
+            aws s3 rm "s3://<< parameters.bucket-name>>" --recursive
   slack_notify:
     description: "Send a message in Slack"
     steps:
@@ -27,21 +49,22 @@ commands:
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
-    # parameters:
-      # Add parameter here     
+    parameters:
+      workflow-id:
+        type: string
+        default: ${CIRCLE_workflow-id:0:5}      
     steps:
       - run:
           name: Revert migrations
-          # Add when this will run
+          when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = 1
+            SUCCESS = $(curl https://keyvalue.immanuel.co/api/KeyVal/GetValue/$(cat ~/appkey.txt)/migration_<<parameters.workflow-id>>)
             if(( $SUCCESS==1 )); 
             then
-            #  cd ~/project/backend
-            #  npm install
-            #  Add revert code here. You can find this in the Getting Started section.
-              exit 1
+              cd ~/project/backend
+              npm install
+              npm run migrations:revert
             fi
 
 defaults: &nodeDockerImage
@@ -171,7 +194,6 @@ jobs:
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:5}" \
               --region us-east-1
               
-   
       - run:
           name: Ensure front-end infrastructure exist
           command: |
@@ -196,6 +218,15 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
+      - run:
+          name: Get memstash key
+          command: |
+            curl https://keyvalue.immanuel.co/api/KeyVal/GetAppKey > ~/appkey.txt
+      - run: cat ~/appkey.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - appkey.txt
       - destroy-environment:
           stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
       - destroy-environment:
@@ -209,6 +240,7 @@ jobs:
       - image: python:3.7-alpine3.16
     steps:
       - checkout
+      - install-aws
       - add_ssh_keys:
           fingerprints: ["4f:e8:df:36:f0:c7:fc:f3:33:a3:bc:73:e6:08:5e:87"]
       - attach_workspace:
@@ -236,6 +268,9 @@ jobs:
     <<: *nodeDockerImage
     steps:
       - checkout
+      - install-aws
+      - attach_workspace:
+          at: ~/
       - restore_cache:
           keys:
             - "backend-build"
@@ -243,38 +278,54 @@ jobs:
           name: Run migrations
           command: |
             cd backend 
-            npm run migrations
-      # - run:
-      #     name: Send migration results to memstash
-      #     command: |
-      #       # Your code here
-      #       exit 1
+            npm run migrations > dump.txt
+      - run:
+          name: Send migration results to memstash
+          command: |
+            if grep -q "has been executed successfully." ~/project/backend/dump.txt   
+            then
+              curl -X POST https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/$(cat ~/appkey.txt)/migration_${CIRCLE_WORKFLOW_ID:0:5}/1
+              fi
       - destroy-environment:
           stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
       - destroy-environment:
-          stack-name: "backend-${CIRCLE_WORKFLOW_ID:0:5}"      
+          stack-name: "backend-${CIRCLE_WORKFLOW_ID:0:5}"
+      - revert-migrations    
       - slack_notify   
 
-#   deploy-frontend:
-#     docker:
-#       # Docker image here that supports AWS CLI
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Get backend url
-#           command: |
-#             # your code here
-#             export API_URL="http://${BACKEND_IP}:3030"
-#             echo "${API_URL}"
-#       - run:
-#           name: Deploy frontend objects
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure      
+  deploy-frontend:
+    <<: *nodeDockerImage
+    steps:
+      - install-aws
+      - checkout
+      - restore_cache:
+          keys: [frontend-build]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Install dependencies
+          command: |
+            cd frontend
+            npm i
+      - run:
+          name: Get backend url
+          command: |
+            # your code here
+            export API_URL="http://$(tail -n 1 ~/project/.circleci/ansible/inventory.txt):3030"
+            echo "${API_URL}"
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm run build
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:5} --recursive
+      - clear-bucket
+      - destroy-environment:
+          stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
+      - destroy-environment:
+          stack-name: "backend-${CIRCLE_WORKFLOW_ID:0:5}"
+      - revert-migrations    
+      - slack_notify    
                     
 #   deploy-backend:
 #     docker:
