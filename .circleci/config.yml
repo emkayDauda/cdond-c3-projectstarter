@@ -53,6 +53,23 @@ jobs:
     docker:
       - image: circleci/node:13.8.0
     steps:
+      - slack/notify:
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "plain_text",
+                      "text": "*Started running workflow*",
+                      "emoji": true
+                    }
+                  ]
+                }
+              ]
+            }
+          event: always
       - checkout
       - restore_cache:
           keys: [frontend-build]
@@ -195,6 +212,7 @@ jobs:
           command: |
             # Your code here
             exit 1
+      - slack_notify
 #       - run:
 #           name: Configure server
 #           command: |
@@ -318,7 +336,8 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend
+      - build-frontend:
+          context: guildOfMages
       - build-backend
       - test-frontend:
           requires: [build-frontend]
