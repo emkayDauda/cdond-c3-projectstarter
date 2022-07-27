@@ -77,7 +77,7 @@ commands:
           when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = $(curl https://keyvalue.immanuel.co/api/KeyVal/GetValue/$(cat ~/appkey.txt)/migration_<<parameters.workflow-id>>)
+            SUCCESS=$(curl https://keyvalue.immanuel.co/api/KeyVal/GetValue/$(cat ~/appkey.txt)/migration_<<parameters.workflow-id>>)
             if(( $SUCCESS==1 )); 
             then
               cd ~/project/backend
@@ -394,6 +394,7 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
+            export API_URL="http://$(tail -n 1 ~/project/.circleci/ansible/inventory.txt):3030"
             if curl "${API_URL}/api/status" | grep "ok"
             then
                 return 0
