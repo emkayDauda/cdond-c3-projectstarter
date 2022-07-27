@@ -2,6 +2,7 @@ version: 2.1
 
 orbs: 
   slack: circleci/slack@4.10.1
+  aws-cli: circleci/aws-cli@3.1.1
 
 commands:
   destroy-environment:
@@ -224,11 +225,11 @@ jobs:
       - run:
           name: "Run Playbook and configure server"
           command: ansible-playbook -i ~/project/.circleci/ansible/inventory.txt .circleci/ansible/configure-server.yml
-      # - destroy-environment:
-      #     stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
-      # - destroy-environment:
-      #     stack-name: "backend-${CIRCLE_WORKFLOW_ID:0:5}"      
-      # - slack_notify   
+      - destroy-environment:
+          stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
+      - destroy-environment:
+          stack-name: "backend-${CIRCLE_WORKFLOW_ID:0:5}"      
+      - slack_notify   
 
   run-migrations:
     <<: *nodeDockerImage
@@ -237,14 +238,18 @@ jobs:
       - run:
           name: Run migrations
           command: |
-            cd backend \
+            cd backend 
             npm run migrations
       # - run:
       #     name: Send migration results to memstash
       #     command: |
       #       # Your code here
       #       exit 1
-     # Here's where you will add some code to rollback on failure      
+      - destroy-environment:
+          stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
+      - destroy-environment:
+          stack-name: "backend-${CIRCLE_WORKFLOW_ID:0:5}"      
+      - slack_notify   
 
 #   deploy-frontend:
 #     docker:
@@ -367,6 +372,7 @@ workflows:
           context: guildOfMages
       - run-migrations:
           requires: [configure-infrastructure]
+          context: guildOfMages
       # - deploy-frontend:
       #     requires: [run-migrations]
       # - deploy-backend:
