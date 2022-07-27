@@ -337,10 +337,14 @@ jobs:
       - attach_workspace:
           at: ~/
       - run:
-          name: Install dependencies [node,]
+          name: Install dependencies [curl,]
           command: |
+            apk add --update curl && \
+              rm -rf /var/cache/apk/*
             curl -fsSL https://deb.nodesource.com/setup_13.x | sudo -E bash -
-            sudo apt install -y nodejs
+            
+            apk add --update nodejs npm
+
             npm i
       - run:
           name: Deploy backend
