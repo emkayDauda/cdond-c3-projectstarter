@@ -457,7 +457,7 @@ jobs:
       steps:
         - checkout
         - install-aws
-        - install_nodejs
+        - install-nodejs
         - run:
             name: Delete previous stacks and files
             command: |
