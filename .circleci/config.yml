@@ -456,7 +456,7 @@ jobs:
         - image: cimg/base:stable
       steps:
         - checkout
-        - install_awscli
+        - install-aws
         - install_nodejs
         - run:
             name: Delete previous stacks and files
