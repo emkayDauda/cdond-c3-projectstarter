@@ -19,15 +19,15 @@
       cd ~/backend
       cat <<EOT >> .env
       ENVIRONMENT= production
-      TYPEORM_CONNECTION= "{{ ansible_env.TYPEORM_CONNECTION }}"
+      TYPEORM_CONNECTION= "{{ lookup('env', 'TYPEORM_CONNECTION') }}"
       TYPEORM_MIGRATIONS_DIR= "./migrations"
       TYPEORM_MIGRATIONS= "./migrations/*.js"
       TYPEORM_ENTITIES= "./modules/domain/**/*.entity.js"
-      TYPEORM_HOST= "{{ ansible_env.TYPEORM_HOST }}"
-      TYPEORM_PORT= "{{ ansible_env.TYPEORM_PORT }}"
-      TYPEORM_USERNAME= "{{ ansible_env.TYPEORM_USERNAME }}"
-      TYPEORM_PASSWORD= "{{ ansible_env.TYPEORM_PASSWORD }}"
-      TYPEORM_DATABASE= "{{ ansible_env.TYPEORM_DATABASE }}"
+      TYPEORM_HOST= "{{ lookup('env', 'TYPEORM_HOST') }}"
+      TYPEORM_PORT= "{{ lookup('env', 'TYPEORM_PORT') }}"
+      TYPEORM_USERNAME= "{{ lookup('env', 'TYPEORM_USERNAME') }}"
+      TYPEORM_PASSWORD= "{{ lookup('env', 'TYPEORM_PASSWORD') }}"
+      TYPEORM_DATABASE= "{{ lookup('env', 'TYPEORM_DATABASE') }}"
       EOT
 
 - name: "build package"
