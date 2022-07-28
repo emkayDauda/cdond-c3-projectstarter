@@ -383,7 +383,6 @@ jobs:
       - checkout
       - install-aws
       - install-nodejs
-      - install-ansible
       - attach_workspace:
           at: ~/
       - run:
