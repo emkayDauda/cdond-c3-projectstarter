@@ -33,6 +33,7 @@
 - name: "build package"
   shell: |
     cd ~/backend
+    npm run migrations
     npm run build
 
 - name: Executing node
