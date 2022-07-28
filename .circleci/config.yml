@@ -296,6 +296,7 @@ jobs:
           name: Run migrations
           command: |
             cd backend 
+            npm install
             npm run migrations > dump.txt
             cat dump.txt
       - run:
@@ -487,9 +488,9 @@ jobs:
               
               if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
               then
-                aws s3 rm "s3://${OldWorkflowID}" --recursive
-                aws cloudformation delete-stack --stack-name "backend-${OldWorkflowID:10:15}"
-                aws cloudformation delete-stack --stack-name "frontend-${OldWorkflowID:10:15}"
+                aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+                aws cloudformation delete-stack --stack-name "backend-${OldWorkflowID}"
+                aws cloudformation delete-stack --stack-name "frontend-${OldWorkflowID}"
               fi
               
 
