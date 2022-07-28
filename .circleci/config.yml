@@ -442,6 +442,10 @@ jobs:
       - run:
           name: Update cloudfront distribution
           command: |
+            export OldWorkflowID=$(aws cloudformation \
+            list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+            --no-paginate --output text)
+            
             aws cloudformation deploy \
             --template-file .circleci/files/cloudfront.yml \
             --stack-name OldStack \
@@ -451,6 +455,8 @@ jobs:
             aws cloudfront create-invalidation \
             --distribution-id $DISTRO_ID \
             --paths "/*"
+
+            curl -k https://kvdb.io/FB4P5zoVABgYfhH8zajZUm/udapeople_old_workflow_id -d "${OldWorkflowID}"
       - clear-bucket
       - destroy-environment:
           stack-name: "frontend-${CIRCLE_WORKFLOW_ID:0:5}"
@@ -471,22 +477,13 @@ jobs:
         - run:
             name: Delete previous stacks and files
             command: |
-              export OldWorkflowID=$(aws cloudformation \
-                      list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-                      --no-paginate --output text)
+              OldWorkflowID=$(curl --insecure https://kvdb.io/FB4P5zoVABgYfhH8zajZUm/udapeople_old_workflow_id)
+              CurrentWorkflowID=${CIRCLE_WORKFLOW_ID:0:5}
               
               echo "Old Workflow ID: $OldWorkflowID"  
+              echo "Current Workflow ID: $CurrentWorkflowID"  
 
-              export STACKS=($(aws cloudformation list-stacks \
-                  --query "StackSummaries[*].StackName" \
-                  --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
-              
-              echo Stack names: "${STACKS[@]}" > a.txt
-
-              cat a.txt
-
-              
-              if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+              if [[ "$CurrentWorkflowID" != "$OldWorkflowID"  ]]
               then
                 aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
                 aws cloudformation delete-stack --stack-name "backend-${OldWorkflowID}"
