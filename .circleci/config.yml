@@ -427,6 +427,8 @@ jobs:
       - checkout
       - install-aws
       - install-nodejs
+      - attach_workspace:
+          at: ~/
       - run:
           name: Export Old Workflow ID
           command: |
@@ -458,6 +460,8 @@ jobs:
         - checkout
         - install-aws
         - install-nodejs
+        - attach_workspace:
+            at: ~/
         - run:
             name: Delete previous stacks and files
             command: |
